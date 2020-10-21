@@ -33,6 +33,7 @@ SETTINGS = {
             'GET_USER_BY_LOGIN': 'GET_USER_BY_LOGIN',
             'GET_HASH_BY_LOGIN': 'GET_HASH_BY_LOGIN',
             'GET_TOKEN_BY_SID': 'GET_TOKEN_BY_SID',
+            'GET_SID_BY_TOKEN': 'GET_SID_BY_TOKEN',
             'COUNT_DISTANCE': 'COUNT_DISTANCE'
         }
     },
@@ -51,6 +52,7 @@ SETTINGS = {
         'KICK_FROM_TEAM': 'LOBBY/KICK_FROM_TEAM',
         'LEAVE_TEAM': 'LOBBY/LEAVE_TEAM',
         'READY_TO_START': 'LOBBY/READY_TO_START',
-        'TEAM_LIST': 'LOBBY/TEAM_LIST'
+        'TEAM_LIST': 'LOBBY/TEAM_LIST',
+        'INVITE_TO_TEAM': 'LOBBY/INVITE_TO_TEAM'
     },
 }
