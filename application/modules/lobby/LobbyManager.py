@@ -143,7 +143,7 @@ class LobbyManager(BaseManager):
                     return False
         await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], False)
 
-    async def inviteToTeam(self, data):
+    async def inviteToTeam(self, sid, data):
         inviter, teamId = self.__findUserInTeams(data['token'])
         # проверяем состоит ли в команде сам пригласитель
         if teamId == data['teamId']:
