@@ -30,4 +30,6 @@ LobbyManager(
     MESSAGES=SETTINGS['MESSAGES']
 )
 
+print('i am here in my heart')
+
 web.run_app(app, port=9000)

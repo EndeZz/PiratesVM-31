@@ -7,19 +7,14 @@ class LobbyManager(BaseManager):
     def __init__(self, mediator, sio, MESSAGES):
         super().__init__(mediator=mediator, sio=sio, MESSAGES=MESSAGES)
 
-        # __teams = {
-        #             'teamId': {passwordTeam, players=[user1, user2, ...], roomId},
-        #             'teamId': {passwordTeam, players=[user1, user2, ...], roomId}
-        #         }
-        # teamId == creatorToken
-        # user = {
-        #   token: '',
-        #   sio: '',
-        #   readyToStart: False
-        # }
-
         self.__teams = {
-            '2312': {'passwordTeam': 12, 'players': [dict(token='11',sid='1231',readyToStart=True), dict(token='233',sid='1231',readyToStart=True)], 'roomId':333}
+            '2312': {
+                'passwordTeam': 12,
+                'players': [
+                    dict(token='11',sid='1231',readyToStart=True),
+                    dict(token='233',sid='1231',readyToStart=True)],
+                'roomId':333
+            }
         }
 
         self.sio.on(self.MESSAGES['CREATE_TEAM'], self.createTeam)
@@ -77,11 +72,12 @@ class LobbyManager(BaseManager):
 
     async def readyToStart(self, sid, data):
         user, teamId = self.__findUserInTeams(data['token'])
-        if user:
+        if user and teamId:
             user['readyToStart'] = True
-        if teamId and self.__checkTeamIsReady(teamId):
-            for user in self.__teams[teamId]['players']:
-                await self.sio.emit(self.MESSAGES['READY_TO_START'], {}, user['sid'])
+            if self.__checkTeamIsReady(teamId):
+                for user in self.__teams[teamId]['players']:
+                    await self.sio.emit(self.MESSAGES['READY_TO_START'], {}, user['sid'])
+                    # начать игру...
         await self.sio.emit(self.MESSAGES['READY_TO_START'], False)
 
     async def createTeam(self, sid, data):
@@ -96,8 +92,8 @@ class LobbyManager(BaseManager):
             passwordTeam = Common().generatePasswordForLobby()  # генерируется из больших англ. букв длиной 7
             self.__teams[user['token']] = dict(passwordTeam=passwordTeam,
                                                players=[dict(token=user['token'],
-                                               sid=sid,
-                                               readyToStart=False)],
+                                                               sid=sid,
+                                                               readyToStart=False)],
                                                roomId=roomId)
             self.sio.enter_room(sid, roomId)
             await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.__teams)
@@ -111,11 +107,12 @@ class LobbyManager(BaseManager):
         user = self.mediator.get(self.TRIGGERS['GET_USER_BY_TOKEN'], data)
         if user:
             teamId = self.__getTeamIdByToken(user['token'])
+            team = self.__getTeamByToken(user['token'])
             if teamId:
                 self.__deleteFromTeam(user['token'], teamId)
                 await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.__teams)
                 await self.sio.emit(self.MESSAGES['KICK_FROM_TEAM'], dict(token=user['token']))
-                self.sio.leave_room(sid, self.__teams[teamId]['roomId'])
+                self.sio.leave_room(sid, team['roomId'])
                 return
         await self.sio.emit(self.MESSAGES['KICK_FROM_TEAM'], False)'''
 
@@ -131,10 +128,10 @@ class LobbyManager(BaseManager):
     async def joinToTeam(self, sio, data):
         user = self.mediator.get(self.TRIGGERS['GET_USER_BY_TOKEN'], data)
         if user:
-            for key in self.teams.keys():
-                if key == data['teamId'] and self.teams[key]['passwordTeam'] == data['passwordTeam']:
-                    self.teams[key]['players'].append({'token': data['userToken']})
-                    await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.teams)
+            for key in self.__teams.keys():
+                if key == data['teamId'] and self.__teams[key]['passwordTeam'] == data['passwordTeam']:
+                    self.__teams[key]['players'].append({'token': data['userToken']})
+                    await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.__teams)
                     await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], True)
                     return True
                 else:

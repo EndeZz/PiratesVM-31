@@ -2,7 +2,7 @@ SETTINGS = {
     'DB': {
         'NAME': 'vm31-db',
         'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'PORT': '5433',
         'USER': 'vm31-user',
         'PASS': '12345678',
     },
@@ -24,7 +24,7 @@ SETTINGS = {
             'DELETE_USER_ONLINE': 'DELETE_USER_ONLINE',
             'UPDATE_TOKEN_BY_LOGIN': 'UPDATE_TOKEN_BY_LOGIN',
             'AUTH': 'AUTH',
-            'LOGOUT': 'LOGOUT'
+            'USER_LOGOUT': 'USER_LOGOUT'
         },
         'TRIGGERS': {
             'GET_ALL_USERS': 'GET_ALL_USERS',

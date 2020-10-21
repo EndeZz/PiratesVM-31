@@ -50,7 +50,7 @@ class DB:
                 port=db['PORT']
             )
             self.cursor = self.connect.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            print('Я подключился!')
+            print('Я подключился к БД!')
         except ValueError as err:
             print('Всё сдохло!', err)
 
@@ -103,6 +103,13 @@ class DB:
         self.cursor.execute(query, (token, login))
         self.connect.commit()
         return True
+
+    def updateUserTokenById(self, id, token):
+        query = "UPDATE users SET token = %s WHERE id = %s "
+        self.cursor.execute(query, (token, id))
+        self.connect.commit()
+        return True
+
 
     @toDict
     def getAllTestResults(self):
