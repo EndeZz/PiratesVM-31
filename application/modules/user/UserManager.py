@@ -7,10 +7,14 @@ from application.modules.BaseManager import BaseManager
 class UserManager(BaseManager):
     def __init__(self, db, mediator, sio, MESSAGES):
         super().__init__(db, mediator, sio, MESSAGES)
+
+        self.user = {}
+
         # регистрируем триггеры
         self.mediator.set(self.TRIGGERS['GET_USER_BY_TOKEN'], self.__getUserByToken)
         self.mediator.set(self.TRIGGERS['GET_USER_BY_LOGIN'], self.__getUserByLogin)
         self.mediator.set(self.TRIGGERS['GET_HASH_BY_LOGIN'], self.__getHashByLogin)
+        self.mediator.set(self.TRIGGERS['GET_USER_BY_ID'], self.__getUserById)
         # регистрируем события
         self.mediator.subscribe(self.EVENTS['INSERT_USER'], self.__insertUser)
         self.mediator.subscribe(self.EVENTS['UPDATE_TOKEN_BY_LOGIN'], self.__updateTokenByLogin)
@@ -32,6 +36,11 @@ class UserManager(BaseManager):
     def __getUserByToken(self, data=None):
         if data:
             return self.db.getUserByToken(data['token'])
+        return None
+
+    def __getUserById(self, data=None):
+        if data:
+            return self.db.getUserById(data['id'])
         return None
 
     def __getUserByLogin(self, data):

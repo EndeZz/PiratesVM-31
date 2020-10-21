@@ -1,5 +1,4 @@
 from application.modules.BaseManager import BaseManager
-from application.modules.lobby.Player import Player
 # генерация пароля для лобби и roomId
 from application.modules.common.Common import Common
 
@@ -9,8 +8,8 @@ class LobbyManager(BaseManager):
         super().__init__(mediator=mediator, sio=sio, MESSAGES=MESSAGES)
 
         # __teams = {
-        #             'teamId': {passwordTeam, players=[{user1}, {user2}, ...], roomId},
-        #             'teamId': {passwordTeam, players=[{user1}, {user2}, ...], roomId}
+        #             'teamId': {passwordTeam, players=[user1, user2, ...], roomId},
+        #             'teamId': {passwordTeam, players=[user1, user2, ...], roomId}
         #         }
         # teamId == creatorToken
         # user = {
@@ -20,7 +19,8 @@ class LobbyManager(BaseManager):
         # }
 
         self.__teams = {
-            '2312': {'passwordTeam': 12, 'players': [dict(token='11',sid='1231',readyToStart=True), dict(token='233',sid='1231',readyToStart=True)], 'roomId':333}
+            '22': {'passwordTeam': 12, 'players': [dict(token='11', sid='1231', readyToStart=True),
+                                                  dict(token='22', sid='1231', readyToStart=True)], 'roomId': 333}
         }
 
         self.sio.on(self.MESSAGES['CREATE_TEAM'], self.createTeam)
@@ -28,6 +28,7 @@ class LobbyManager(BaseManager):
         self.sio.on(self.MESSAGES['LEAVE_TEAM'], self.leaveTeam)
         self.sio.on(self.MESSAGES['READY_TO_START'], self.readyToStart)
         self.sio.on(self.MESSAGES['JOIN_TO_TEAM'], self.joinToTeam)
+        self.sio.on(self.MESSAGES['INVITE_TO_TEAM'], self.inviteToTeam)
 
     def __findUserInTeams(self, token):
         for teamKey in self.__teams:
@@ -89,7 +90,7 @@ class LobbyManager(BaseManager):
         if user:
             for teamId in self.__teams:
                 if user['token'] == teamId:  # если уже создал свою команду
-                    await self.sio.emit(self.MESSAGES['CREATE_TEAM'], False)
+                    await self.sio.emit(self.MESSAGES['CREATE_TEAM'], False, sid)
                     return
             self.__deleteUserFromAllTeams(user['token'], sid)
             roomId = Common().getRoomId()
@@ -101,23 +102,23 @@ class LobbyManager(BaseManager):
                                                roomId=roomId)
             self.sio.enter_room(sid, roomId)
             await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.__teams)
-            await self.sio.emit(self.MESSAGES['CREATE_TEAM'], True)
+            await self.sio.emit(self.MESSAGES['CREATE_TEAM'], True, sid)
             return
-        await self.sio.emit(self.MESSAGES['CREATE_TEAM'], False)
+        await self.sio.emit(self.MESSAGES['CREATE_TEAM'], False, sid)
 
     async def kickFromTeam(self, sid, data):
-        dataUser = dict(token=data['kickedToken'])
-        dataUserCap = dict(token=data['captainToken'])
-        user = self.mediator.get(self.TRIGGERS['GET_USER_BY_TOKEN'], dataUser)
-        userCap = self.mediator.get(self.TRIGGERS['GET_USER_BY_TOKEN'], dataUserCap)
+        dataUser = dict(id=data['kickedId'])
+        dataOwner = dict(id=data['ownerId'])
+        user = self.mediator.get(self.TRIGGERS['GET_USER_BY_ID'], dataUser)
+        owner = self.mediator.get(self.TRIGGERS['GET_USER_BY_ID'], dataOwner)
         teamId = self.__getTeamIdByToken(user['token'])
-        if userCap['id'] == teamId:
+        if owner['token'] == teamId:
             if user:
                 self.__deleteFromTeam(user['token'], teamId)
                 await self.sio.emit(self.MESSAGES['TEAM_LIST'], self.__teams)
-                await self.sio.emit(self.MESSAGES['KICK_FROM_TEAM'], dict(kickedToken=user['token'], captainToken=userCap['token']))
+                await self.sio.emit(self.MESSAGES['KICK_FROM_TEAM'], dict(userId=user['id'], ownerId=owner['id']))
                 self.sio.leave_room(sid, self.__teams[teamId]['roomId'])
-                return
+                return print(self.__teams[teamId]['players'])
         await self.sio.emit(self.MESSAGES['KICK_FROM_TEAM'], False)
 
     async def leaveTeam(self, sid, data):
@@ -142,3 +143,21 @@ class LobbyManager(BaseManager):
                     await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], False)
                     return False
         await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], False)
+
+    async def inviteToTeam(self, sid, data):
+        inviter, teamId = self.__findUserInTeams(data['token'])
+        # проверяем состоит ли в команде сам пригласитель
+        if teamId == data['teamId']:
+            invited, teamId = self.__findUserInTeams(data['invitedToken'])
+            # проверяем состоит ли в какой либо команде приглашённый
+            if invited is None and teamId is None:
+                teamId = data['teamId']
+                invitedSid = self.mediator.get(self.TRIGGERS['GET_SID_BY_TOKEN'], dict(token=data['invitedToken']))
+                # отправляем приглашённому teamId и passwordTeam
+                await self.sio.emit(
+                    self.MESSAGES['INVITE_TO_TEAM'],
+                    dict(teamId=teamId, passwordTeam=self.__teams[teamId]['passwordTeam']),
+                    invitedSid
+                )
+                return
+        await self.sio.emit(self.MESSAGES['INVITE_TO_TEAM'], False, sid)

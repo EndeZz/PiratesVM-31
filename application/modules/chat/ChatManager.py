@@ -19,6 +19,7 @@ class ChatManager(BaseManager):
         self.mediator.subscribe(self.EVENTS['DELETE_USER_ONLINE'], self.deleteUserOnline)
 
         self.mediator.set(self.TRIGGERS['GET_TOKEN_BY_SID'], self.getTokenBySid)
+        self.mediator.set(self.TRIGGERS['GET_SID_BY_TOKEN'], self.getSidByToken)
 
         @sio.event
         def connect(sid, environ):
@@ -48,6 +49,12 @@ class ChatManager(BaseManager):
         for token, value in self.__usersSid.items():
             if value == data['sid']:
                 return token
+        return None
+
+    def getSidByToken(self, data):
+        for key in self.__usersSid:
+            if key == data['token']:
+                return self.__usersSid[key]['sid']
         return None
 
     # отпрваить сообщение
