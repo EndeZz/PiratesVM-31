@@ -28,6 +28,7 @@ class LobbyManager(BaseManager):
         self.sio.on(self.MESSAGES['LEAVE_TEAM'], self.leaveTeam)
         self.sio.on(self.MESSAGES['READY_TO_START'], self.readyToStart)
         self.sio.on(self.MESSAGES['JOIN_TO_TEAM'], self.joinToTeam)
+        self.sio.on(self.MESSAGES['INVITE_TO_TEAM'], self.inviteToTeam)
 
     def __findUserInTeams(self, token):
         for teamKey in self.__teams:
@@ -141,3 +142,22 @@ class LobbyManager(BaseManager):
                     await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], False)
                     return False
         await self.sio.emit(self.MESSAGES['JOIN_TO_TEAM'], False)
+
+    async def inviteToTeam(self, sid, data):
+        inviter, teamId = self.__findUserInTeams(data['token'])
+        # проверяем состоит ли в команде сам пригласитель
+        if teamId == data['teamId']:
+            invited, teamId = self.__findUserInTeams(data['invitedToken'])
+            # проверяем состоит ли в какой либо команде приглашённый
+            if invited is None and teamId is None:
+                teamId = data['teamId']
+                invitedSid = self.mediator.get(self.TRIGGERS['GET_SID_BY_TOKEN'], dict(token=data['invitedToken']))
+                # отправляем приглашённому teamId и passwordTeam
+                await self.sio.emit(
+                    self.MESSAGES['INVITE_TO_TEAM'],
+                    dict(teamId=teamId, passwordTeam=self.__teams[teamId]['passwordTeam']),
+                    invitedSid)
+            else:
+                await self.sio.emit(self.MESSAGES['INVITE_TO_TEAM'], False)
+        else:
+            await self.sio.emit(self.MESSAGES['INVITE_TO_TEAM'], False)
