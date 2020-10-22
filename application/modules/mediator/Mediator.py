@@ -46,5 +46,6 @@ class Mediator:
         if name:
             cbs = self.events.get(name)
             if cbs:
-                return cbs(data)
+                for cb in cbs:
+                    return cb(data)
         return None

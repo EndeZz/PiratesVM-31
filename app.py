@@ -28,7 +28,7 @@ LobbyManager(
     mediator=mediator,
     sio=sio,
     MESSAGES=SETTINGS['MESSAGES']
-)
+).test()
 
 print('i am here in my heart')
 
