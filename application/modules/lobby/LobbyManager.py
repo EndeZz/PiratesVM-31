@@ -1,12 +1,16 @@
 from application.modules.BaseManager import BaseManager
 # генерация пароля для лобби и roomId
 from application.modules.common.Common import Common
+from .Player import Player
+from .Team import Team
 
 
 class LobbyManager(BaseManager):
     def __init__(self, mediator, sio, MESSAGES):
         super().__init__(mediator=mediator, sio=sio, MESSAGES=MESSAGES)
-
+        self.__common = Common()
+        self.__team = Team()
+        self.__player = Player()
         self.__teams = {
             '2312': {
                 'passwordTeam': 12,
@@ -88,8 +92,8 @@ class LobbyManager(BaseManager):
                     await self.sio.emit(self.MESSAGES['CREATE_TEAM'], False)
                     return
             self.__deleteUserFromAllTeams(user['token'], sid)
-            roomId = Common().getRoomId()
-            passwordTeam = Common().generatePasswordForLobby()  # генерируется из больших англ. букв длиной 7
+            roomId = self.__common.getRoomId()
+            passwordTeam = self.__common.generatePasswordForLobby()  # генерируется из больших англ. букв длиной 7
             self.__teams[user['token']] = dict(passwordTeam=passwordTeam,
                                                players=[dict(token=user['token'],
                                                                sid=sid,
