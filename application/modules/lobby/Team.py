@@ -3,14 +3,15 @@ class Team:
         self.teamId = data['teamId']
         self.name = data['name']
         self.players = data['players']
-        self.password = data['password'] if 'password' in data else ''
-        self.isPrivate = data['isPrivate'] if 'isPrivate' in data else False
+        self.password = data['password']
+        self.isPrivate = data['isPrivate']
         self.roomId = data['roomId']
 
     def get(self):
         return dict(teamId=self.teamId,
                     name=self.name,
                     players=self.players,
+                    password=self.password,
                     isPrivate= self.isPrivate
                     )
 

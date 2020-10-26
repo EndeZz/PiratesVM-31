@@ -66,6 +66,8 @@ const Authorization = () => {
       const random = Math.random();
       const hash = md5(md5(form.password + form.login) + random);
       socket.emit(SOCKET_EVENTS.USER_LOGIN, { login: form.login, hash, random });
+      socket.emit('LOBBY/CREATE_TEAM', {token:'111', name:'TEST', isPrivate:true})
+      socket.emit('LOBBY/TEAM_LIST')
     }
   };
 

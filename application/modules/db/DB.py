@@ -65,7 +65,7 @@ class DB:
     
     @toArrayOfDicts
     def getUsersOnline(self):
-        self.cursor.execute("SELECT id, name, login, token FROM users WHERE token != 'NULL' ")
+        self.cursor.execute("SELECT id, name, login, token FROM users WHERE token != '' ")
         return self.cursor.fetchall()
 
     @toDict
